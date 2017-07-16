@@ -1,5 +1,6 @@
 package com.example.a15017523.smalltalk2;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
@@ -21,8 +22,11 @@ import android.view.ViewGroup;
 
 import android.widget.TextView;
 
+import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener,
@@ -30,6 +34,14 @@ public class MainActivity extends AppCompatActivity implements
         GroupChats.OnFragmentInteractionListener,
         CommonChats.OnFragmentInteractionListener{
 
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUser firebaseUser;
+
+    private String userName;
+    private String photoUrl;
+    public static final String ANONYMOUS = "anonymous";
+
+    private GoogleApiClient googleApiClient;
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -63,14 +75,26 @@ public class MainActivity extends AppCompatActivity implements
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseUser = firebaseAuth.getCurrentUser();
+        userName= ANONYMOUS;
+
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this /*FragmentActivity*/, this /* OnConnectionFailedListener */)
+                .addApi(Auth.GOOGLE_SIGN_IN_API)
+                .build();
+
+        if (firebaseUser == null) {
+            // Not signed in, launch the Sign In activity
+            startActivity(new Intent(this, SignInActivity.class));
+            finish();
+            return;
+        } else {
+            userName = firebaseUser.getDisplayName();
+            if (firebaseUser.getPhotoUrl() != null) {
+                photoUrl = firebaseUser.getPhotoUrl().toString();
             }
-        });
+        }
 
     }
 
